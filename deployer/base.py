@@ -56,9 +56,14 @@ def deploy_config():
         run("tar xzvf {0}".format(shellquote(remote_archive)))
         run("rm {0}".format(shellquote(remote_archive)))
         config_owner = config.get_config_owner()
-        sudo("chown -R {0} {1}".format(shellquote(config_owner), shellquote(remote_stagedir)))
-        config_perms = config.get_config_perms()
-        sudo("chmod {0} -R {1}".format(config_perms, shellquote(remote_stagedir)))
+        config_group = config.get_config_group()
+        sudo("chown -R {0}:{1} {2}".format(shellquote(config_owner), shellquote(config_group), shellquote(remote_stagedir)))
+        folder_perms = config.get_config_folder_perms()
+        file_perms = config.get_config_file_perms()
+        if folder_perms.lower() != "skip":
+            sudo("chmod {0} -R {1}".format(folder_perms, shellquote(remote_stagedir)))
+        if file_perms.lower() != "skip":
+            sudo("find {0} -type f -exec chmod {1} {{}} \;".format(shellquote(remote_stagedir), file_perms))
         sudo("rm -Rf {0}".format(remote_config_folder))
         sudo("mv {0} {1}".format(remote_stagedir, remote_config_folder))
     with settings(hide('warnings'), warn_only=True):

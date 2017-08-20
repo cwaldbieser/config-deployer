@@ -89,10 +89,27 @@ def get_config_owner():
     global CONFIG
     return CONFIG['targets'].get('config-owner', 'root')
 
-def get_config_perms():
+def get_config_group():
     """
-    Return the permissions of the config files.
+    Return the group of the config folder.
     """
     global CONFIG
-    return CONFIG['targets'].get('config-perms', 'u=rx,go=')
+    group = CONFIG['targets'].get('config-group', None)
+    if group is None:
+        group = get_config_owner()
+    return group
+
+def get_config_folder_perms():
+    """
+    Return the permissions of the config folders.
+    """
+    global CONFIG
+    return CONFIG['targets'].get('config-folder-perms', 'u=rx,go=')
+
+def get_config_file_perms():
+    """
+    Return the permissions of the config folders.
+    """
+    global CONFIG
+    return CONFIG['targets'].get('config-file-perms', 'u=r,go=')
 
