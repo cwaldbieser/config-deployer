@@ -2,6 +2,7 @@
 import os
 import sys
 from fabric.api import *
+from fabric.contrib import console as fabconsole
 from fabric import operations
 from fabric import utils as fabutils
 import yaml
@@ -22,6 +23,13 @@ def deploy_config():
     src_branch = config.get_config_branch()
     remote_config_folder = config.get_remote_config_folder() 
     with lcd(wt):
+        with settings(hide('warnings'), warn_only=True):
+            result = local("git diff-index --quiet HEAD --", capture=True)
+        if result.failed:
+            if fabconsole.confirm("There are uncommited changes in the working tree.  Reset to HEAD?"):
+                local("git reset --hard HEAD")
+            else:
+                fabutils.abort("Can't use working tree with uncommitted changes.  Stash, commit, or reset.")
         local("git checkout {0}".format(shellquote(src_branch)))
         local("git secret reveal")
         ttools.fill_templates()
@@ -34,7 +42,7 @@ def deploy_config():
         secrets_file_name = config.get_secrets_file_name()
         local("git rm -f {0}".format(shellquote(secrets_file_name)))
         local("git rm -f .gitignore")
-        local("git rm -f .gitsecret")
+        local("git rm -rf .gitsecret")
         local("git commit -m 'Decrypted for deployment.'")
         archive_path = local("mktemp", capture=True)
         local("git archive --format tgz -o {0} HEAD".format(shellquote(archive_path)))
