@@ -61,9 +61,9 @@ def deploy_config():
         sudo("chmod {0} -R {1}".format(config_perms, shellquote(remote_stagedir)))
         sudo("rm -Rf {0}".format(remote_config_folder))
         sudo("mv {0} {1}".format(remote_stagedir, remote_config_folder))
-        with settings(hide('warnings'), warn_only=True):
-            result = sudo("which restorecon")
-        if not result.failed:
-            sudo("restorecon -R {0}".format(shellquote(remote_config_folder)))
+    with settings(hide('warnings'), warn_only=True):
+        result = sudo("which restorecon")
+    if not result.failed:
+        sudo("restorecon -R {0}".format(shellquote(remote_config_folder)))
     
     
