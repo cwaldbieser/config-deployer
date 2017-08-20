@@ -4,7 +4,7 @@ import os
 from fabric import utils as fabutils
 import jinja2
 import yaml
-import deployer.config 
+import deployer.config as config
 
 def fill_templates():
     """

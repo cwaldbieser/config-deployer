@@ -1,6 +1,8 @@
 
 import os
-import deployer.config
+from fabric.api import (lcd, local)
+import deployer.config as config
+from deployer.shellfuncs import shellquote
 
 def filter_files_for_archival(extension):
     """
@@ -26,7 +28,7 @@ def filter_files_for_archival(extension):
                 transformed = os.path.splitext(fname)[0]
                 with lcd(dirpath):
                     if os.path.exists(os.path.join(dirpath, transformed)):
-                        local("git add {0}".format(shellquote(transformed))) 
+                        local("git add -f {0}".format(shellquote(transformed))) 
                     else:
                         fabutils.warn("Could not find file '{0}' for archival.".format(transformed))
                     local("git rm -f {0}".format(shellquote(fname)))
