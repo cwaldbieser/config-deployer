@@ -77,7 +77,7 @@ tool is used to encrypt the secrets with symetric encryption ala GnuPG.
 Because encrypting a file essentially removes some of the benefits of version
 control, actual configuration files that would normally contain secrets in 
 clear text are replaced with template files.  The templates use the 
-`Jinja2 <http://jinja.pocoo.org/docs/2.9/>_` template syntaxi.  Placeholders
+`Jinja2 <http://jinja.pocoo.org/docs/2.9/>`_ template syntaxi.  Placeholders
 are replaced with decrypted secrets at deployment time.
 
 All the secrets for the configuration are placed in a single file in the root
