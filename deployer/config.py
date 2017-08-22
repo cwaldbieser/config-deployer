@@ -113,3 +113,10 @@ def get_config_file_perms():
     global CONFIG
     return CONFIG['targets'].get('config-file-perms', 'u=r,go=')
 
+def get_ad_hoc_perms():
+    """
+    Return the permissions of ad hoc files or folders.
+    """
+    global CONFIG
+    return CONFIG['targets'].get('ad-hoc-perms', {})
+
