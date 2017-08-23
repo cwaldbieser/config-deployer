@@ -27,7 +27,7 @@ def fill_templates():
         with open(path) as f:
             try:
                 t = jinja2_env.from_string(f.read())
-            except TemplateSyntaxError as ex:
+            except Exception as ex:
                 fabutils.warn("Error processing template '{0}'.".format(path))
                 raise
             transformed = os.path.splitext(path)[0]
