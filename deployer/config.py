@@ -1,4 +1,5 @@
 
+import ConfigParser
 import os
 import sys
 from fabric.api import env
@@ -21,6 +22,29 @@ def load_config():
     with open(CONFIG_PATH, "r") as f:
         CONFIG = yaml.load(f)
     _set_roles()
+    settings = _load_settings()
+    if 'working_tree_base' in settings:
+        CONFIG['working_tree_base'] = settings['working_tree_base']
+
+def _load_settings():
+    """
+    Load settings that may affect the deployment from standard locations:
+
+    ~/.deployer.cfg
+
+    Returns a mapping on settings.
+    """
+    settings = {}
+    paths = []
+    user_settings = os.path.expanduser('~/.deployer.cfg')
+    if os.path.exists(user_settings):
+        paths.append(user_settings)
+    scp = ConfigParser.SafeConfigParser()
+    scp.read(paths)
+    if scp.has_section("SOURCES"):
+        if scp.has_option("SOURCES", "working_tree_base"):
+            settings['working_tree_base'] = os.path.expanduser(scp.get("SOURCES", "working_tree_base"))
+    return settings
 
 def _set_roles():
     """
@@ -66,7 +90,17 @@ def get_working_tree():
     Get the working tree URL.
     """
     global CONFIG
-    return CONFIG['working-tree']
+    wt = CONFIG['working-tree']
+    if not os.path.exists(wt):
+        wt_base = CONFIG.get('working_tree_base', None)
+        if wt_base:
+            new_wt = os.path.join(
+                wt_base,
+                os.path.basename(wt.rstrip('/'))
+            )
+            if os.path.exists(new_wt):
+                return new_wt
+    return wt
 
 def get_secrets_file_name():
     """
