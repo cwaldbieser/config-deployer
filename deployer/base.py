@@ -22,6 +22,8 @@ def deploy_config():
     wt = config.get_working_tree()
     src_branch = config.get_config_branch()
     remote_config_folder = config.get_remote_config_folder() 
+    if not os.path.exists(wt):
+        fabutils.abort("Working tree '{0}' does not exist!".format(wt))
     with lcd(wt):
         with settings(hide('warnings'), warn_only=True):
             result = local("git diff-index --quiet HEAD --", capture=True)
