@@ -24,6 +24,7 @@ def deploy_config():
     remote_config_folder = config.get_remote_config_folder() 
     if not os.path.exists(wt):
         fabutils.abort("Working tree '{0}' does not exist!".format(wt))
+    has_secrets = os.path.exists(os.path.join(wt, ".gitsecret")) 
     with lcd(wt):
         with settings(hide('warnings'), warn_only=True):
             result = local("git diff-index --quiet HEAD --", capture=True)
@@ -33,19 +34,24 @@ def deploy_config():
             else:
                 fabutils.abort("Can't use working tree with uncommitted changes.  Stash, commit, or reset.")
         local("git checkout {0}".format(shellquote(src_branch)))
-        local("git secret reveal")
-        ttools.fill_templates()
+        if has_secrets:
+            local("git secret reveal")
+            ttools.fill_templates()
         archive_branch = "{0}-archive".format(src_branch)
         with settings(hide('warnings'), warn_only=True):
             local("git branch -D {0}".format(shellquote(archive_branch))) 
         local("git checkout -b {0}".format(shellquote(archive_branch))) 
         filter_files_for_archival(".secret") 
         filter_files_for_archival(".template") 
-        secrets_file_name = config.get_secrets_file_name()
-        local("git rm -f {0}".format(shellquote(secrets_file_name)))
-        local("git rm -f .gitignore")
-        local("git rm -rf .gitsecret")
-        local("git commit -m 'Decrypted for deployment.'")
+        if has_secrets:
+            secrets_file_name = config.get_secrets_file_name()
+            local("git rm -f {0}".format(shellquote(secrets_file_name)))
+        if os.path.exists(os.path.join(wt, '.gitignore')):
+            local("git rm -f .gitignore")
+        if os.path.exists(os.path.join(wt, '.gitsecret')):
+            local("git rm -rf .gitsecret")
+        with settings(hide('warnings'), warn_only=True):
+            local("git commit -m 'Decrypted for deployment.'")
         archive_path = local("mktemp", capture=True)
         local("git archive --format tgz -o {0} HEAD".format(shellquote(archive_path)))
         local("git checkout {0}".format(shellquote(src_branch)))
