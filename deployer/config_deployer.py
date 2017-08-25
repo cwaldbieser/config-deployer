@@ -12,8 +12,6 @@ from deployer.fabcmdline import yesno2boolean
 from deployer import template_tools as ttools
 from deployer.shellfuncs import shellquote
 
-config.load_config()
-
 @task
 def deploy_config():
     """
