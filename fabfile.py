@@ -9,6 +9,9 @@ from deployer.package_deployer import (
     remove_package,
 )
 from deployer.superuser import root_cmd
+from deployer.httpd import (
+    restart_httpd
+)
 
 config.load_config()
 
