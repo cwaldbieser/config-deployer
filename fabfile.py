@@ -8,6 +8,7 @@ from deployer.package_deployer import (
     install_local_package,
     remove_package,
 )
+from deployer.superuser import root_cmd
 
 config.load_config()
 
