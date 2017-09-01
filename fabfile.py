@@ -12,6 +12,7 @@ from deployer.superuser import root_cmd
 from deployer.httpd import (
     restart_httpd
 )
+from deployer.etc import copy_etc
 
 config.load_config()
 
