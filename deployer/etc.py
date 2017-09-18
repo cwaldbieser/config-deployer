@@ -9,11 +9,22 @@ from deployer.fabcmdline import yesno2boolean
 from deployer.shellfuncs import shellquote
 
 @task
-def copy_etc(src_dir='etc', dst_dir='/etc'):
+def copy_etc(src_dir='etc', dst_dir='/etc', perm_file="__perm__"):
     """
     If the deployed config folder contains a top level folder named
     'etc', its contents are copied to the corresponding locations
     in the /etc file hirearchy.
+
+    Any file with the name specified by `perm_file` in any folder will
+    be used to set the owner, group, and permission bits of any files
+    in the same folder.  After this operation is complete, the perm-file
+    itself is removed.  The perm file has the following structure::
+
+        # Lines starting with '#' are comments; blank lines are ignored
+        
+        afilename:owner:group:perms
+        another:owner:group:u=rw,go=
+
     """
     remote_config_dir = config.get_remote_config_folder()
     src_etc = strip_trailing_slash(os.path.join(remote_config_dir, src_dir))
