@@ -8,12 +8,14 @@ from fabric import utils as fabutils
 import yaml
 from deployer.archive_filter import filter_files_for_archival 
 from deployer import config
+from deployer.etc import _copy_etc
 from deployer.fabcmdline import yesno2boolean
+from deployer.permissions import apply_permissions
 from deployer import template_tools as ttools
 from deployer.shellfuncs import shellquote
 
 @task
-def deploy_config():
+def deploy_config(move_etc='Y'):
     """
     Deploy a configuration.
     """
@@ -73,6 +75,12 @@ def deploy_config():
             sudo("find {0} -type f -exec chmod {1} {{}} \;".format(shellquote(remote_stagedir), file_perms))
         for path, perm in ad_hoc_perms.items():
             sudo("chmod {0} {1}".format(shellquote(perm), shellquote(path)))        
+    apply_permissions(remote_stagedir)
+    move_etc = yesno2boolean(move_etc)
+    if move_etc:
+        remote_staged_etc = os.path.join(remote_stagedir, "etc")
+        _copy_etc(remote_stagedir, 'etc', '/etc')
+        sudo("rm -Rf {0}".format(shellquote(remote_staged_etc)))
     sudo("rm -Rf {0}".format(remote_config_folder))
     sudo("mv {0} {1}".format(remote_stagedir, remote_config_folder))
     with settings(hide('warnings'), warn_only=True):

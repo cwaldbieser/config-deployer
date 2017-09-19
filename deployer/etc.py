@@ -9,27 +9,25 @@ from deployer.fabcmdline import yesno2boolean
 from deployer.shellfuncs import shellquote
 
 @task
-def copy_etc(src_dir='etc', dst_dir='/etc', perm_file="__perm__"):
+def copy_etc(src_dir='etc', dst_dir='/etc'):
     """
     If the deployed config folder contains a top level folder named
     'etc', its contents are copied to the corresponding locations
     in the /etc file hirearchy.
-
-    Any file with the name specified by `perm_file` in any folder will
-    be used to set the owner, group, and permission bits of any files
-    in the same folder.  After this operation is complete, the perm-file
-    itself is removed.  The perm file has the following structure::
-
-        # Lines starting with '#' are comments; blank lines are ignored
-        
-        afilename:owner:group:perms
-        another:owner:group:u=rw,go=
-
     """
     remote_config_dir = config.get_remote_config_folder()
-    src_etc = strip_trailing_slash(os.path.join(remote_config_dir, src_dir))
+    _copy_etc(remote_config_dir, src_dir, dst_dir)
+
+def _copy_etc(parent_dir, src_dir, dst_dir):
+    """
+    If `parent_dir` contains a top-level folder named , th the value
+    in `src_dir`, its contents
+    are copied into the corresponding locations
+    in the `dst_dir` file hirearchy.
+    """
+    src_etc = strip_trailing_slash(os.path.join(parent_dir, src_dir))
     dst_dir = strip_trailing_slash(dst_dir)
-    sudo("cp -dR {0}/. {1}/".format(shellquote(src_etc), shellquote(dst_dir)))
+    sudo("if [ -d {0} ]; then cp -dR {0}/. {1}/ ; fi".format(shellquote(src_etc), shellquote(dst_dir)))
 
 def strip_trailing_slash(pth):
     """
