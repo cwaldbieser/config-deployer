@@ -27,7 +27,7 @@ def _copy_etc(parent_dir, src_dir, dst_dir):
     """
     src_etc = strip_trailing_slash(os.path.join(parent_dir, src_dir))
     dst_dir = strip_trailing_slash(dst_dir)
-    sudo("if [ -d {0} ]; then cp -dR {0}/. {1}/ ; fi".format(shellquote(src_etc), shellquote(dst_dir)))
+    sudo("if [ -d {0} ]; then cp -dR --remove-destination {0}/. {1}/ ; fi".format(shellquote(src_etc), shellquote(dst_dir)))
 
 def strip_trailing_slash(pth):
     """
