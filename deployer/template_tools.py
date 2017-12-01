@@ -16,7 +16,9 @@ def fill_templates():
     """
     basedir = config.get_working_tree()
     secrets = config.get_secrets_file_name() 
-    secrets_path = os.path.join(basedir, "secrets.yml")
+    if secrets is None:
+        return
+    secrets_path = os.path.join(basedir, secrets)
     if not os.path.exists(secrets_path):
         fabutils.abort("Secrets file '{0}' does not exist.".format(secrets_path))
     jinja2_env = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)

@@ -45,7 +45,8 @@ def deploy_config(move_etc='Y'):
         filter_files_for_archival(".template") 
         if has_secrets:
             secrets_file_name = config.get_secrets_file_name()
-            local("git rm -f {0}".format(shellquote(secrets_file_name)))
+            if secrets_file_name is not None:
+                local("git rm -f {0}".format(shellquote(secrets_file_name)))
         if os.path.exists(os.path.join(wt, '.gitignore')):
             local("git rm -f .gitignore")
         if os.path.exists(os.path.join(wt, '.gitsecret')):
