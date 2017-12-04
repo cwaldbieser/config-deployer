@@ -121,14 +121,23 @@ def get_config_owner():
     Return the owner of the config folder.
     """
     global CONFIG
-    return CONFIG['targets'].get('config-owner', 'root')
+    primary_role_name = get_primary_role()
+    primary_role = CONFIG['roles'][primary_role_name]
+    config_owner = primary_role.get("config-owner", None)
+    if config_owner is None:
+        config_owner = CONFIG['targets'].get('config-owner', 'root') 
+    return config_owner
 
 def get_config_group():
     """
     Return the group of the config folder.
     """
     global CONFIG
-    group = CONFIG['targets'].get('config-group', None)
+    primary_role_name = get_primary_role()
+    primary_role = CONFIG['roles'][primary_role_name]
+    group = primary_role.get("config-group", None)
+    if group is None:
+        group = CONFIG['targets'].get('config-group', None)
     if group is None:
         group = get_config_owner()
     return group
