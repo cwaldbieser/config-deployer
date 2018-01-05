@@ -1,5 +1,6 @@
 
 import os
+from fabric import utils as fabutils
 from fabric.api import (lcd, local)
 import deployer.config as config
 from deployer.shellfuncs import shellquote
