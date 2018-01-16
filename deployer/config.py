@@ -19,6 +19,9 @@ def load_config():
     global CONFIG_PATH
     global CONFIG
     CONFIG_PATH = os.environ['DEPLOYER_CONFIG']
+    deployer_config_prefix = os.environ.get('DEPLOYER_CONFIG_PREFIX', None)
+    if deployer_config_prefix is not None:
+        CONFIG_PATH = os.path.join(deployer_config_prefix, CONFIG_PATH)
     with open(CONFIG_PATH, "r") as f:
         CONFIG = yaml.load(f)
     _set_roles()
