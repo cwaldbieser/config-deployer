@@ -15,12 +15,15 @@ from deployer import template_tools as ttools
 from deployer.shellfuncs import shellquote
 
 @task
-def deploy_config(move_etc='Y'):
+def deploy_config(src_commit=None,move_etc='Y'):
     """
     Deploy a configuration.
     """
     wt = config.get_working_tree()
-    src_branch = config.get_config_branch()
+    if src_commit is None:
+        src_branch = config.get_config_branch()
+    else:
+        src_branch = src_commit
     remote_config_folder = config.get_remote_config_folder() 
     if not os.path.exists(wt):
         fabutils.abort("Working tree '{0}' does not exist!".format(wt))
