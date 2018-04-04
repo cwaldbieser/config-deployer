@@ -15,10 +15,21 @@ from deployer import template_tools as ttools
 from deployer.shellfuncs import shellquote
 
 @task
-def deploy_config(src_commit=None,move_etc='Y'):
+def deploy_config(src_commit=None, move_etc='Y', local_archive=None):
     """
     Deploy a configuration.
+    
+    :param move_etc:`(Y)/N - Move the embedded 'etc' config to the '/etc' root.` 
+    :param local_archive:`Don't deploy-- instead create a local archive at this path.`
     """
+    move_etc = yesno2boolean(move_etc)
+    if move_etc and (not local_archive is None):
+        fabutils.warn("Option `local_archive` will ignore option `move_etc`.")
+        move_etc = False
+    if local_archive:
+        local_archive_folder = os.path.dirname(local_archive)
+        if not os.path.isdir(local_archive_folder):
+            fabutils.abort("Folder `{}` does not exist.".format(local_archive_folder))
     wt = config.get_working_tree()
     if src_commit is None:
         src_branch = config.get_config_branch()
@@ -60,6 +71,9 @@ def deploy_config(src_commit=None,move_etc='Y'):
         local("git archive --format tgz -o {0} HEAD".format(shellquote(archive_path)))
         local("git checkout {0}".format(shellquote(src_branch)))
         local("git branch -D {0}".format(shellquote(archive_branch)))
+    if not local_archive is None:
+        local("cp {} {}".format(shellquote(archive_path), shellquote(local_archive)))
+        sys.exit(0) 
     remote_archive = run("mktemp")
     paths = operations.put(archive_path, remote_archive)
     local("rm {0}".format(shellquote(archive_path)))
@@ -80,7 +94,6 @@ def deploy_config(src_commit=None,move_etc='Y'):
         for path, perm in ad_hoc_perms.items():
             sudo("chmod {0} {1}".format(shellquote(perm), shellquote(path)))        
     apply_permissions(remote_stagedir)
-    move_etc = yesno2boolean(move_etc)
     if move_etc:
         remote_staged_etc = os.path.join(remote_stagedir, "etc")
         _copy_etc(remote_stagedir, 'etc', '/etc')
