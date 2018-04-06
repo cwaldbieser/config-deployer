@@ -30,6 +30,45 @@ def deploy_config(src_commit=None, move_etc='Y', local_archive=None):
         local_archive_folder = os.path.dirname(local_archive)
         if not os.path.isdir(local_archive_folder):
             fabutils.abort("Folder `{}` does not exist.".format(local_archive_folder))
+    archive_path = create_local_archive(src_commit)
+    if not local_archive is None:
+        local("cp {} {}".format(shellquote(archive_path), shellquote(local_archive)))
+        sys.exit(0) 
+    remote_archive = run("mktemp")
+    paths = operations.put(archive_path, remote_archive)
+    local("rm {0}".format(shellquote(archive_path)))
+    remote_stagedir = run("mktemp -d")
+    with cd(remote_stagedir):
+        run("tar xzvf {0}".format(shellquote(remote_archive)))
+        run("rm {0}".format(shellquote(remote_archive)))
+        config_owner = config.get_config_owner()
+        config_group = config.get_config_group()
+        sudo("chown -R {0}:{1} {2}".format(shellquote(config_owner), shellquote(config_group), shellquote(remote_stagedir)))
+        folder_perms = config.get_config_folder_perms()
+        file_perms = config.get_config_file_perms()
+        ad_hoc_perms = config.get_ad_hoc_perms()
+        if folder_perms.lower() != "skip":
+            sudo("chmod {0} -R {1}".format(folder_perms, shellquote(remote_stagedir)))
+        if file_perms.lower() != "skip":
+            sudo("find {0} -type f -exec chmod {1} {{}} \;".format(shellquote(remote_stagedir), file_perms))
+        for path, perm in ad_hoc_perms.items():
+            sudo("chmod {0} {1}".format(shellquote(perm), shellquote(path)))        
+    apply_permissions(remote_stagedir)
+    if move_etc:
+        remote_staged_etc = os.path.join(remote_stagedir, "etc")
+        _copy_etc(remote_stagedir, 'etc', '/etc')
+        sudo("rm -Rf {0}".format(shellquote(remote_staged_etc)))
+    sudo("rm -Rf {0}".format(remote_config_folder))
+    sudo("mv {0} {1}".format(remote_stagedir, remote_config_folder))
+    with settings(hide('warnings'), warn_only=True):
+        result = sudo("which restorecon")
+    if not result.failed:
+        sudo("restorecon -R {0}".format(shellquote(remote_config_folder)))
+    
+def create_local_archive(src_commit):
+    """
+    Create local archive and return its path.
+    """
     wt = config.get_working_tree()
     if src_commit is None:
         src_branch = config.get_config_branch()
@@ -71,38 +110,5 @@ def deploy_config(src_commit=None, move_etc='Y', local_archive=None):
         local("git archive --format tgz -o {0} HEAD".format(shellquote(archive_path)))
         local("git checkout {0}".format(shellquote(src_branch)))
         local("git branch -D {0}".format(shellquote(archive_branch)))
-    if not local_archive is None:
-        local("cp {} {}".format(shellquote(archive_path), shellquote(local_archive)))
-        sys.exit(0) 
-    remote_archive = run("mktemp")
-    paths = operations.put(archive_path, remote_archive)
-    local("rm {0}".format(shellquote(archive_path)))
-    remote_stagedir = run("mktemp -d")
-    with cd(remote_stagedir):
-        run("tar xzvf {0}".format(shellquote(remote_archive)))
-        run("rm {0}".format(shellquote(remote_archive)))
-        config_owner = config.get_config_owner()
-        config_group = config.get_config_group()
-        sudo("chown -R {0}:{1} {2}".format(shellquote(config_owner), shellquote(config_group), shellquote(remote_stagedir)))
-        folder_perms = config.get_config_folder_perms()
-        file_perms = config.get_config_file_perms()
-        ad_hoc_perms = config.get_ad_hoc_perms()
-        if folder_perms.lower() != "skip":
-            sudo("chmod {0} -R {1}".format(folder_perms, shellquote(remote_stagedir)))
-        if file_perms.lower() != "skip":
-            sudo("find {0} -type f -exec chmod {1} {{}} \;".format(shellquote(remote_stagedir), file_perms))
-        for path, perm in ad_hoc_perms.items():
-            sudo("chmod {0} {1}".format(shellquote(perm), shellquote(path)))        
-    apply_permissions(remote_stagedir)
-    if move_etc:
-        remote_staged_etc = os.path.join(remote_stagedir, "etc")
-        _copy_etc(remote_stagedir, 'etc', '/etc')
-        sudo("rm -Rf {0}".format(shellquote(remote_staged_etc)))
-    sudo("rm -Rf {0}".format(remote_config_folder))
-    sudo("mv {0} {1}".format(remote_stagedir, remote_config_folder))
-    with settings(hide('warnings'), warn_only=True):
-        result = sudo("which restorecon")
-    if not result.failed:
-        sudo("restorecon -R {0}".format(shellquote(remote_config_folder)))
-    
-    
+    return archive_path
+
