@@ -111,3 +111,40 @@ The structure of `secrets.yml` looks like:
 Each template file listed will have its placeholders replaced with the mappings
 under its *secrets* key.
 
+----------------------------------
+Deploying to a Docker-Build Target
+----------------------------------
+
+Rather than deploying configurations to a physical or virtual machine, it may
+be desireable to deploy a configuration as part of a docker image.  In this
+kind of deployment, the repository will contain a 
+`Dockerfile <https://docs.docker.com/engine/reference/builder/>`_ and supporting
+configuration files for building a docker image.  The configuration will have
+secrets interpolated prior to executing the dockerfile.  The docker image may
+be built on the local host or on a remote host.  Settings can influence the
+docker build:
+
+.. code:: yaml
+
+    working-tree: /path/to/repo/containing/Dockerfile
+    targets:
+        # Indicate that this deployment has a docker-build target.
+        docker-build-target: True
+    roles:
+        stage:
+            target-hosts:
+                - localhost
+            # The built image can be named for later use with `docker run`.
+            docker-build-name: shib-idp-tier
+            # Values can be supplied from the command line for values in the Dockerfile recipie.
+            docker-build-args:
+                SHBCFG: ./shib-config/conf
+                SHBCREDS: ./shib-config/credentials
+                SHBMSGS: ./shib-config/messages
+                SHBMD: ./shib-config/metadata
+                SHBEDWAPP: ./shib-config/edit-webapp
+            # Remove intermediate images (same as `docker build --rm`).
+            docker-build-rm: True
+            # The docker build path.
+            docker-build-path: .
+
