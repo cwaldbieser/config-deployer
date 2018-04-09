@@ -34,6 +34,7 @@ def deploy_config(src_commit=None, move_etc='Y', local_archive=None):
     if not local_archive is None:
         local("cp {} {}".format(shellquote(archive_path), shellquote(local_archive)))
         sys.exit(0) 
+    remote_config_folder = config.get_remote_config_folder() 
     remote_archive = run("mktemp")
     paths = operations.put(archive_path, remote_archive)
     local("rm {0}".format(shellquote(archive_path)))
@@ -58,13 +59,41 @@ def deploy_config(src_commit=None, move_etc='Y', local_archive=None):
         remote_staged_etc = os.path.join(remote_stagedir, "etc")
         _copy_etc(remote_stagedir, 'etc', '/etc')
         sudo("rm -Rf {0}".format(shellquote(remote_staged_etc)))
-    sudo("rm -Rf {0}".format(remote_config_folder))
-    sudo("mv {0} {1}".format(remote_stagedir, remote_config_folder))
-    with settings(hide('warnings'), warn_only=True):
-        result = sudo("which restorecon")
-    if not result.failed:
-        sudo("restorecon -R {0}".format(shellquote(remote_config_folder)))
+    is_docker_build_target = config.is_docker_build_target()
+    if is_docker_build_target:
+        build_docker_target(remote_stagedir) 
+    if not remote_config_folder is None:
+        sudo("rm -Rf {0}".format(remote_config_folder))
+        sudo("mv {0} {1}".format(remote_stagedir, remote_config_folder))
+        with settings(hide('warnings'), warn_only=True):
+            result = sudo("which restorecon")
+        if not result.failed:
+            sudo("restorecon -R {0}".format(shellquote(remote_config_folder)))
+    else:
+        sudo("rm -Rf {}".format(shellquote(remote_stagedir)))
     
+def build_docker_target(remote_stagedir):
+    """
+    Build a docker image from the configuration in `remote_stagedir`.
+    """
+    with cd(remote_stagedir):
+        build_name = config.get_docker_build_name()
+        build_path = config.get_docker_build_path()
+        rm_flag = config.get_docker_build_rm()
+        build_args = config.get_docker_build_args() 
+        args = ['docker', 'build']
+        if rm_flag:
+            args.append("--rm")
+        if not build_name is None:
+            args.append("-t")
+            args.append(shellquote(build_name))
+        for k, v in build_args.items():
+            args.append("--build-arg")
+            args.append(shellquote("{}={}".format(k, v)))
+        args.append(shellquote(build_path))
+        command = ' '.join(args)
+        sudo(command)
+
 def create_local_archive(src_commit):
     """
     Create local archive and return its path.
@@ -74,7 +103,6 @@ def create_local_archive(src_commit):
         src_branch = config.get_config_branch()
     else:
         src_branch = src_commit
-    remote_config_folder = config.get_remote_config_folder() 
     if not os.path.exists(wt):
         fabutils.abort("Working tree '{0}' does not exist!".format(wt))
     has_secrets = os.path.exists(os.path.join(wt, ".gitsecret")) 

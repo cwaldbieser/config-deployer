@@ -117,7 +117,7 @@ def get_remote_config_folder():
     Return the path of the config folder on the remote host.
     """
     global CONFIG
-    return CONFIG['targets']['config-folder']
+    return CONFIG['targets'].get('config-folder', None)
 
 def get_config_owner():
     """
@@ -166,3 +166,48 @@ def get_ad_hoc_perms():
     global CONFIG
     return CONFIG['targets'].get('ad-hoc-perms', {})
 
+def is_docker_build_target():
+    """
+    Return True is the targets section has `docker-build-target` set.
+    """
+    global CONFIG
+    targets = CONFIG['targets']
+    return targets.get('docker-build-target', False)
+
+def get_docker_build_name():
+    """
+    Return Docker build name or None.
+    """
+    global CONFIG
+    primary_role_name = get_primary_role()
+    primary_role = CONFIG['roles'][primary_role_name]
+    return primary_role.get("docker-build-name", None)
+
+def get_docker_build_path():
+    """
+    Return Docker build path or '.'.
+    """
+    global CONFIG
+    primary_role_name = get_primary_role()
+    primary_role = CONFIG['roles'][primary_role_name]
+    return primary_role.get("docker-build-path", '.')
+
+def get_docker_build_rm():
+    """
+    Return whether `rm` option to remove intermediate containers after a
+    successful build should be enabled or not.
+    """
+    global CONFIG
+    primary_role_name = get_primary_role()
+    primary_role = CONFIG['roles'][primary_role_name]
+    return primary_role.get("docker-build-rm", None)
+    
+def get_docker_build_args():
+    """
+    Return a dict of Docker build-args for a docker target.
+    """
+    global CONFIG
+    primary_role_name = get_primary_role()
+    primary_role = CONFIG['roles'][primary_role_name]
+    return dict(primary_role.get("docker-build-args", {}))
+    
