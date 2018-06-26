@@ -16,6 +16,7 @@ from deployer.httpd import (
     restart_httpd
 )
 from deployer.etc import copy_etc
+from deployer.docker import docker_run
 
 config.load_config()
 

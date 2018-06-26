@@ -210,4 +210,12 @@ def get_docker_build_args():
     primary_role_name = get_primary_role()
     primary_role = CONFIG['roles'][primary_role_name]
     return dict(primary_role.get("docker-build-args", {}))
-    
+
+def get_docker_run_args():
+    """
+    Return a list of args to apply to `docker run`. 
+    """
+    global CONFIG
+    primary_role_name = get_primary_role()
+    primary_role = CONFIG['roles'][primary_role_name]
+    return list(primary_role.get("docker-run-args", []))
