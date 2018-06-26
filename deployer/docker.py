@@ -15,3 +15,25 @@ def docker_run():
     args = [shellquote(arg) for arg in args]
     cmd = ' '.join(args)
     sudo(cmd)
+
+@task
+def docker_stop(container):
+    """
+    Stop a docker container from a deployed image.
+    """
+    args = ['docker', 'stop']
+    args.append(container)
+    args = [shellquote(arg) for arg in args]
+    cmd = ' '.join(args)
+    sudo(cmd)
+
+@task
+def docker_rm(container):
+    """
+    Stop a docker container from a deployed image.
+    """
+    args = ['docker', 'rm']
+    args.append(container)
+    args = [shellquote(arg) for arg in args]
+    cmd = ' '.join(args)
+    sudo(cmd)
