@@ -4,10 +4,13 @@ from deployer import config
 from deployer.shellfuncs import shellquote
 
 @task
-def docker_run():
+def docker_run(stop_and_remove=None):
     """
     Run a docker container from a deployed image.
     """
+    if stop_and_remove is not None:
+        docker_stop(stop_and_remove)
+        docker_rm(stop_and_remove)
     build_name = config.get_docker_build_name()
     args = ['docker', 'run']
     args.extend(config.get_docker_run_args())
