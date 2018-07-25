@@ -81,6 +81,7 @@ def build_docker_target(remote_stagedir):
         build_path = config.get_docker_build_path()
         rm_flag = config.get_docker_build_rm()
         build_args = config.get_docker_build_args() 
+        build_options = config.get_docker_build_options()
         args = ['docker', 'build']
         if rm_flag:
             args.append("--rm")
@@ -90,6 +91,7 @@ def build_docker_target(remote_stagedir):
         for k, v in build_args.items():
             args.append("--build-arg")
             args.append(shellquote("{}={}".format(k, v)))
+        args.extend(build_options)
         args.append(shellquote(build_path))
         command = ' '.join(args)
         sudo(command)
