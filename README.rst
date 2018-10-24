@@ -77,7 +77,7 @@ tool is used to encrypt the secrets with symetric encryption ala GnuPG.
 Because encrypting a file essentially removes some of the benefits of version
 control, actual configuration files that would normally contain secrets in 
 clear text are replaced with template files.  The templates use the 
-`Jinja2 <http://jinja.pocoo.org/docs/2.9/>`_ template syntaxi.  Placeholders
+`Jinja2 <http://jinja.pocoo.org/docs/2.9/>`_ template syntax.  Placeholders
 are replaced with decrypted secrets at deployment time.
 
 All the secrets for the configuration are placed in a single file in the root
@@ -110,6 +110,41 @@ The structure of `secrets.yml` looks like:
 
 Each template file listed will have its placeholders replaced with the mappings
 under its *secrets* key.
+
+--------------------------------------------
+Environment Variables and User Configuration
+--------------------------------------------
+
+The deployer software looks for configuration in the following locations:
+
+* ~/.deployer.cfg
+
+A number of environment variables control the operation of the software:
+
+* `DEPLOYER_CONFIG` - This specifies which deployment configuration to use.  It
+  may be a full path, or it may be combined with `DEPLOYER_CONFIG_PREFIX` (see
+  below).  This variable is required.  As such, it is common to set it on the
+  command line before the actual deployer command.
+* `DEPLOYER_CONFIG_PREFIX` - This specifies a path that will be the prefix for
+  your deployment files.  This is useful if you store them under a common
+  folder.  You can set this environment variable is your shell startup script,
+  e.g. `~/.bashrc`.
+
+""""""""""""""""""""""""""
+Set your working tree base
+""""""""""""""""""""""""""
+
+If you have many configurations, it is sometimes convenient to arrange them
+under a common folder.  This folder may vary if you switch workstations or
+just choose to re-organize.  Rather than having to update all your deployment
+files, you can specify a working tree base in the deployer configuration:
+
+.. code:: ini
+
+    [SOURCES]
+    working_tree_base = ~/git-repos/app_configs
+
+Tilda expansion is supported.
 
 ----------------------------------
 Deploying to a Docker-Build Target
