@@ -4,6 +4,7 @@ import argparse
 import sys
 from deployer.config import load_config
 from deployer import config_deployer
+from deployer import docker
 from deployer import introspect
 
 def deploy_config(args):
@@ -26,6 +27,15 @@ def query(args):
     """
     cfg = load_config(args.config, args.stage)
     introspect.list_hosts(cfg)
+
+def docker_run(args):
+    """
+    Run a docker container on remote hosts.
+    """
+    cfg = load_config(args.config, args.stage)
+    pool = cfg.conn_pool
+    for conn in pool:
+        docker.docker_run(conn, cfg, args.stop_and_remove)
 
 def main(args):
     """
@@ -67,6 +77,15 @@ if __name__ == "__main__":
 
     parser_query = subparsers.add_parser('query', help='Interrogate configuration.')
     parser_query.set_defaults(func=query)
+
+    parser_docker_run = subparsers.add_parser('docker-run', help='Run docker containers on remote hosts.')
+    parser_docker_run.add_argument(
+        "-r",
+        "--stop-and-remove",
+        action="store",
+        metavar="CONTAINER",
+        help="First, stop and remove CONTAINER before running the new container.")
+    parser_docker_run.set_defaults(func=docker_run)
 
     args = parser.parse_args()
     main(args)

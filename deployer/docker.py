@@ -1,26 +1,22 @@
 
-from fabric.api import *
-from deployer import config
 from deployer.shellfuncs import shellquote
 
-@task
-def docker_run(stop_and_remove=None):
+def docker_run(conn, config, stop_and_remove=None):
     """
     Run a docker container from a deployed image.
     """
     if stop_and_remove is not None:
-        docker_stop(stop_and_remove)
-        docker_rm(stop_and_remove)
+        docker_stop(conn, stop_and_remove)
+        docker_rm(conn, stop_and_remove)
     build_name = config.get_docker_build_name()
     args = ['docker', 'run']
     args.extend(config.get_docker_run_args())
     args.append(build_name)
     args = [shellquote(arg) for arg in args]
     cmd = ' '.join(args)
-    sudo(cmd)
+    conn.sudo(cmd)
 
-@task
-def docker_stop(container):
+def docker_stop(conn, container):
     """
     Stop a docker container from a deployed image.
     """
@@ -28,10 +24,9 @@ def docker_stop(container):
     args.append(container)
     args = [shellquote(arg) for arg in args]
     cmd = ' '.join(args)
-    sudo(cmd)
+    conn.sudo(cmd)
 
-@task
-def docker_rm(container):
+def docker_rm(conn, container):
     """
     Stop a docker container from a deployed image.
     """
@@ -39,4 +34,5 @@ def docker_rm(container):
     args.append(container)
     args = [shellquote(arg) for arg in args]
     cmd = ' '.join(args)
-    sudo(cmd)
+    conn.sudo(cmd)
+
