@@ -6,6 +6,7 @@ from deployer.config import load_config
 from deployer import config_deployer
 from deployer import docker
 from deployer import introspect
+from deployer import package_deployer
 
 def deploy_config(args):
     """
@@ -36,6 +37,20 @@ def docker_run(args):
     pool = cfg.conn_pool
     for conn in pool:
         docker.docker_run(conn, cfg, args.stop_and_remove)
+
+def manage_rpm(args):
+    """
+    Manage RPM packages on remote hosts.
+    """
+    cfg = load_config(args.config, args.stage)
+    pool = cfg.conn_pool
+    for conn in pool:
+        if args.local:
+            package_deployer.install_local_rpm(conn, args.package)
+        elif args.uninstall:
+            package_deployer.remove_rpm(conn, args.package)
+        else:
+            package_deployer.install_rpm(conn, args.package)
 
 def main(args):
     """
@@ -86,6 +101,25 @@ if __name__ == "__main__":
         metavar="CONTAINER",
         help="First, stop and remove CONTAINER before running the new container.")
     parser_docker_run.set_defaults(func=docker_run)
+
+    parser_rpm = subparsers.add_parser('rpm', help='Manage RPM packages on remote hosts.')
+    parser_rpm.add_argument(
+        "package",
+        action="store",
+        help="RPM package name or path.")
+    mxg = parser_rpm.add_mutually_exclusive_group(required=False)
+    mxg.add_argument(
+        "-u",
+        "--uninstall",
+        action="store_true",
+        help="Uninstall the package.")
+    mxg.add_argument(
+        "-l",
+        "--local",
+        action="store_true",
+        help="PACKAGE is a path to a local package that must first be copied to the remote host.")
+    del mxg
+    parser_rpm.set_defaults(func=manage_rpm)
 
     args = parser.parse_args()
     main(args)
