@@ -7,7 +7,7 @@ Based on the python Fabric tool.
 
 Example::
 
-    [waldbiec@my-workstation]$ DEPLOYER_CONFIG=./lutil-deployment.yml fab -R prod -u waldbiec deploy_config
+    [waldbiec@my-workstation]$ pipenv run ./deploy.py amqp_provisioners-config.yml local deploy-config
 
 The deployment tools assumes a basic structure for the deployment configuration
 file.  It also assumes some other conventions unless you tell it otherwise in
@@ -36,7 +36,7 @@ A deployment configuration file is a YAML file with a particular structure.
     roles:
         # Role names are arbitrary.  However, if you use the same names
         # for your repository branches, you don't need to specify the
-        # branches explicitly.
+        # branches explicitly.  Roles are also known as "stages".
         dev:
             config-branch: dev      # If not specified, assumes same name as role.
             # A role priority is an integer and may be negative (low priority) or
@@ -83,7 +83,7 @@ are replaced with decrypted secrets at deployment time.
 All the secrets for the configuration are placed in a single file in the root
 of the project called `secrets.yml`.  This file should be encrypted with 
 `git secret`.  This means that all the secrets will be encrypted, and version
-history will tell you if *something* in the secrests file changed, but you will
+history will tell you if *something* in the secrets file changed, but you will
 not be able to know exactly what changed unless you keep notes in the commit 
 message.
 
@@ -121,10 +121,6 @@ The deployer software looks for configuration in the following locations:
 
 A number of environment variables control the operation of the software:
 
-* `DEPLOYER_CONFIG` - This specifies which deployment configuration to use.  It
-  may be a full path, or it may be combined with `DEPLOYER_CONFIG_PREFIX` (see
-  below).  This variable is required.  As such, it is common to set it on the
-  command line before the actual deployer command.
 * `DEPLOYER_CONFIG_PREFIX` - This specifies a path that will be the prefix for
   your deployment files.  This is useful if you store them under a common
   folder.  You can set this environment variable is your shell startup script,
