@@ -88,7 +88,7 @@ def build_docker_target(conn, config, remote_stagedir):
         args.extend(build_options)
         args.append(shellquote(build_path))
         command = ' '.join(args)
-        conn.sudo(command)
+    conn.sudo('''bash -c "cd {} && {}"'''.format(shellquote(remote_stagedir), command))
 
 def create_local_archive(conn, config, src_commit):
     """
