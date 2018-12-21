@@ -30,26 +30,26 @@ def deploy_config(conn, config, src_commit=None, move_etc=True, local_archive=No
         conn.local("cp {} {}".format(shellquote(archive_path), shellquote(local_archive)))
         sys.exit(0) 
     remote_config_folder = config.get_remote_config_folder() 
-    remote_archive = conn.run("mktemp")
+    remote_archive = conn.run("mktemp").stdout.rstrip()
     paths = conn.put(archive_path, remote_archive)
     conn.local("rm {}".format(shellquote(archive_path)))
-    remote_stagedir = conn.run("mktemp -d")
+    remote_stagedir = conn.run("mktemp -d").stdout.rstrip()
     with conn.cd(remote_stagedir):
         conn.run("tar xzvf {}".format(shellquote(remote_archive)))
         conn.run("rm {}".format(shellquote(remote_archive)))
-        config_owner = config.get_config_owner()
-        config_group = config.get_config_group()
-        conn.sudo("chown -R {}:{} {}".format(shellquote(config_owner), shellquote(config_group), shellquote(remote_stagedir)))
-        folder_perms = config.get_config_folder_perms()
-        file_perms = config.get_config_file_perms()
-        ad_hoc_perms = config.get_ad_hoc_perms()
-        if folder_perms.lower() != "skip":
-            conn.sudo("chmod {} -R {}".format(folder_perms, shellquote(remote_stagedir)))
-        if file_perms.lower() != "skip":
-            conn.sudo("find {0} -type f -exec chmod {1} {{}} \;".format(shellquote(remote_stagedir), file_perms))
-        for path, perm in ad_hoc_perms.items():
-            conn.sudo("chmod {} {}".format(shellquote(perm), shellquote(path)))        
-    apply_permissions(remote_stagedir)
+    config_owner = config.get_config_owner()
+    config_group = config.get_config_group()
+    conn.sudo("chown -R {}:{} {}".format(shellquote(config_owner), shellquote(config_group), shellquote(remote_stagedir)))
+    folder_perms = config.get_config_folder_perms()
+    file_perms = config.get_config_file_perms()
+    ad_hoc_perms = config.get_ad_hoc_perms()
+    if folder_perms.lower() != "skip":
+        conn.sudo("chmod {} -R {}".format(folder_perms, shellquote(remote_stagedir)))
+    if file_perms.lower() != "skip":
+        conn.sudo("find {} -type f -exec chmod {} {{}} \;".format(shellquote(remote_stagedir), file_perms))
+    for path, perm in ad_hoc_perms.items():
+        conn.sudo("chmod {} {}".format(shellquote(perm), shellquote(path)))        
+    apply_permissions(conn, config, remote_stagedir)
     if move_etc:
         remote_staged_etc = os.path.join(remote_stagedir, "etc")
         _copy_etc(remote_stagedir, 'etc', '/etc')

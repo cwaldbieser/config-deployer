@@ -16,7 +16,7 @@ def deploy_config(args):
             conn,
             cfg,
             src_commit=args.commit,
-            move_etc=not args.no_etc,
+            move_etc=(not args.no_etc) and (args.archive is None),
             local_archive=args.archive)
 
 def main(args):

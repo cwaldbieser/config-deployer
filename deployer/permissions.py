@@ -12,7 +12,7 @@ def apply_permissions(conn, config, folder, perm_file='__perms__'):
     the folder as applicable.
     """
     result = conn.sudo("find {} -name {} -print".format(shellquote(folder), shellquote(perm_file)))
-    lines = result.splitlines()
+    lines = result.stdout.splitlines()
     for line in lines:
         if line.strip() == "":
             continue
@@ -29,7 +29,7 @@ def parse_fields(conn, perm_file):
     Yield each permission.
     """
     result = conn.sudo("cat {}".format(shellquote(perm_file)))
-    lines = result.splitlines()
+    lines = result.stdout.splitlines()
     for line in lines:
         if line.strip() == "":
             continue
@@ -37,7 +37,7 @@ def parse_fields(conn, perm_file):
             continue
         fields = line.split(":")
         if len(fields) != 4:
-            warn("Permission '{0}' in file {1} is mal-formed.".format(line, perm_file))
+            warn("Permission '{}' in file {} is mal-formed.".format(line, perm_file))
             continue 
         fname = fields[0]
         user = fields[1]
