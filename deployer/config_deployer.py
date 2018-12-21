@@ -52,7 +52,7 @@ def deploy_config(conn, config, src_commit=None, move_etc=True, local_archive=No
     apply_permissions(conn, config, remote_stagedir)
     if move_etc:
         remote_staged_etc = os.path.join(remote_stagedir, "etc")
-        _copy_etc(remote_stagedir, 'etc', '/etc')
+        _copy_etc(conn, remote_stagedir, 'etc', '/etc')
         conn.sudo("rm -Rf {}".format(shellquote(remote_staged_etc)))
     is_docker_build_target = config.is_docker_build_target()
     if is_docker_build_target:
