@@ -1,14 +1,12 @@
 
-from __future__ import print_function
 import os
 import sys
-from fabric import utils as fabutils
+from invoke import Exit
 import jinja2
 from jinja2.exceptions import TemplateSyntaxError
 import yaml
-import deployer.config as config
 
-def fill_templates():
+def fill_templates(config):
     """
     Inspect `secrets.yml` in the working tree and replace the 
     placeholders contained in the files described with actual 
@@ -20,7 +18,7 @@ def fill_templates():
         return
     secrets_path = os.path.join(basedir, secrets)
     if not os.path.exists(secrets_path):
-        fabutils.abort("Secrets file '{0}' does not exist.".format(secrets_path))
+        raise Exit("Secrets file '{}' does not exist.".format(secrets_path))
     jinja2_env = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
     with open(secrets_path, "r") as f:
         doc = yaml.load(f)

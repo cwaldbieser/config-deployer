@@ -1,11 +1,10 @@
 
 import os
-from fabric import utils as fabutils
-from fabric.api import (lcd, local)
-import deployer.config as config
+import sys
 from deployer.shellfuncs import shellquote
+from deployer.terminal import warn
 
-def filter_files_for_archival(extension):
+def filter_files_for_archival(conn, config, extension):
     """
     Scan the working tree for files that end with `extension`.
     Add the file in the same folder with the same name sans
@@ -27,10 +26,9 @@ def filter_files_for_archival(extension):
         for fname in filenames:
             if fname.endswith(extension):
                 transformed = os.path.splitext(fname)[0]
-                with lcd(dirpath):
-                    if os.path.exists(os.path.join(dirpath, transformed)):
-                        local("git add -f {0}".format(shellquote(transformed))) 
-                    else:
-                        fabutils.warn("Could not find file '{0}' for archival.".format(transformed))
-                    local("git rm -f {0}".format(shellquote(fname)))
+                if os.path.exists(os.path.join(dirpath, transformed)):
+                    conn.local("cd {} && git add -f {}".format(shellquote(dirpath), shellquote(transformed))) 
+                else:
+                    warn("Could not find file '{}' for archival.".format(transformed))
+                conn.local("cd {} && git rm -f {}".format(shellquote(dirpath), shellquote(fname)))
         
