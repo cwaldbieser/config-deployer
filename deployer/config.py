@@ -6,6 +6,7 @@ import yaml
 import attr
 from fabric import SerialGroup
 from fabric.config import Config as ConnectionConfig
+from invoke import Exit
 
 @attr.s
 class Config(object):
@@ -161,6 +162,8 @@ def load_config(config_path, stage):
         config_path = os.path.join(deployer_config_prefix, config_path)
     with open(config_path, "r") as f:
         cfg.settings = yaml.load(f)
+    if not stage in cfg.settings['roles']:
+        raise Exit("Stage `{}` not found in configuration.".format(stage))
     create_connections_(cfg)
     settings = load_settings_()
     if 'working_tree_base' in settings:
