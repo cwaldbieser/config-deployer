@@ -27,8 +27,8 @@ def filter_files_for_archival(conn, config, extension):
             if fname.endswith(extension):
                 transformed = os.path.splitext(fname)[0]
                 if os.path.exists(os.path.join(dirpath, transformed)):
-                    conn.local("cd {} && git add -f {}".format(shellquote(dirpath), shellquote(transformed))) 
+                    conn.run("cd {} && git add -f {}".format(shellquote(dirpath), shellquote(transformed))) 
                 else:
                     warn("Could not find file '{}' for archival.".format(transformed))
-                conn.local("cd {} && git rm -f {}".format(shellquote(dirpath), shellquote(fname)))
+                conn.run("cd {} && git rm -f {}".format(shellquote(dirpath), shellquote(fname)))
         

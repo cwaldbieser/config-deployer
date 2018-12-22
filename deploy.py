@@ -7,20 +7,28 @@ from deployer import config_deployer
 from deployer import docker
 from deployer import introspect
 from deployer import package_deployer
+from deployer.shellfuncs import shellquote
 
 def deploy_config(args):
     """
     Deploy a configuration.
     """
     cfg = load_config(args.config, args.stage)
-    pool = cfg.conn_pool
-    for conn in pool:
-        config_deployer.deploy_config(
-            conn,
-            cfg,
-            src_commit=args.commit,
-            move_etc=(not args.no_etc) and (args.archive is None),
-            local_archive=args.archive)
+    invoker = cfg.invoker
+    archive_path = config_deployer.create_local_archive(invoker, cfg, args.commit)
+    if not args.archive is None:
+        invoker.run("mv {} {}".format(shellquote(archive_path), shellquote(args.archive)))
+        sys.exit(0) 
+    try:
+        pool = cfg.conn_pool
+        for conn in pool:
+            config_deployer.deploy_config(
+                conn,
+                cfg,
+                archive_path,
+                move_etc=(not args.no_etc) and (args.archive is None))
+    finally:
+        invoker.run("rm {}".format(shellquote(archive_path)))
 
 def query(args):
     """
@@ -120,6 +128,9 @@ if __name__ == "__main__":
         help="PACKAGE is a path to a local package that must first be copied to the remote host.")
     del mxg
     parser_rpm.set_defaults(func=manage_rpm)
+
+    #parser_shell = subparsers.add_parser('shell', help='Run arbitrary shell commands.')
+    #parser_shell.set_defaults(func=execute_shell)
 
     args = parser.parse_args()
     main(args)

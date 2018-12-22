@@ -6,12 +6,14 @@ import yaml
 import attr
 from fabric import SerialGroup
 from fabric.config import Config as ConnectionConfig
+import invoke
 from invoke import Exit
 
 @attr.s
 class Config(object):
     settings = attr.ib(default=None)
     stage = attr.ib(default=None)
+    invoker = attr.ib(default=None)
     conn_pool = attr.ib(default=None)
 
     def get_config_branch(self):
@@ -197,7 +199,11 @@ def create_connections_(cfg):
     roles = cfg.settings['roles']
     stage = roles[cfg.stage]
     target_hosts = stage['target-hosts']
-    cf = ConnectionConfig({'run': {'echo': True, 'env': dict(os.environ)}})
+    cf_settings = {'run': {'echo': True, 'env': dict(os.environ)}}
+    cf = ConnectionConfig(cf_settings)
     group = SerialGroup(*target_hosts, config=cf)
     cfg.conn_pool = group
+    cf = invoke.config.Config(cf_settings)
+    ctx = invoke.context.Context(cf)
+    cfg.invoker = ctx
 
