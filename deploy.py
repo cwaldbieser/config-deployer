@@ -60,6 +60,19 @@ def manage_rpm(args):
         else:
             package_deployer.install_rpm(conn, args.package)
 
+def execute_shell(args):
+    """
+    Execute arbitrary remote commands.
+    """
+    cfg = load_config(args.config, args.stage)
+    cmd = ' '.join([shellquote(arg) for arg in args.arg])
+    pool = cfg.conn_pool
+    for conn in pool:
+        if args.sudo:
+            conn.sudo(cmd)
+        else:
+            conn.run(cmd)
+
 def main(args):
     """
     Main function.
@@ -129,8 +142,18 @@ if __name__ == "__main__":
     del mxg
     parser_rpm.set_defaults(func=manage_rpm)
 
-    #parser_shell = subparsers.add_parser('shell', help='Run arbitrary shell commands.')
-    #parser_shell.set_defaults(func=execute_shell)
+    parser_shell = subparsers.add_parser('shell', help='Run arbitrary shell commands.')
+    parser_shell.add_argument(
+        "-s",
+        "--sudo",
+        action="store_true",
+        help="Use `sudo` to execute the remote command.")
+    parser_shell.add_argument(
+        "arg",
+        action="store",
+        nargs=argparse.REMAINDER,
+        help="Arguments that will be passed to the remote shell")
+    parser_shell.set_defaults(func=execute_shell)
 
     args = parser.parse_args()
     main(args)
