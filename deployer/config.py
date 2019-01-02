@@ -147,7 +147,7 @@ class Config(object):
         return list(role.get("docker-run-args", []))
 
 
-def load_config(config_path, stage):
+def load_config(config_path, stage, sudo_passwd=None):
     """
     Load the deployment config.
 
@@ -166,7 +166,7 @@ def load_config(config_path, stage):
         cfg.settings = yaml.load(f)
     if not stage in cfg.settings['roles']:
         raise Exit("Stage `{}` not found in configuration.".format(stage))
-    create_connections_(cfg)
+    create_connections_(cfg, sudo_passwd)
     settings = load_settings_()
     if 'working_tree_base' in settings:
         cfg.settings['working_tree_base'] = settings['working_tree_base']
@@ -192,14 +192,17 @@ def load_settings_():
             settings['working_tree_base'] = os.path.expanduser(scp.get("SOURCES", "working_tree_base"))
     return settings
 
-def create_connections_(cfg):
+def create_connections_(cfg, sudo_passwd):
     """
     Create connections from the config and stage.
     """
     roles = cfg.settings['roles']
     stage = roles[cfg.stage]
     target_hosts = stage['target-hosts']
-    cf_settings = {'run': {'echo': True, 'env': dict(os.environ)}}
+    cf_settings = {
+        'run': {'echo': True, 'env': dict(os.environ)},
+        'sudo': {'password': sudo_passwd},
+    }
     cf = ConnectionConfig(cf_settings)
     group = SerialGroup(*target_hosts, config=cf)
     cfg.conn_pool = group

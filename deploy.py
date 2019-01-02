@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import argparse
+import getpass
 import sys
 from deployer.config import load_config
 from deployer import config_deployer
@@ -13,7 +14,7 @@ def deploy_config(args):
     """
     Deploy a configuration.
     """
-    cfg = load_config(args.config, args.stage)
+    cfg = load_config(args.config, args.stage, args.sudo_passwd)
     invoker = cfg.invoker
     archive_path = config_deployer.create_local_archive(invoker, cfg, args.commit)
     if not args.archive is None:
@@ -34,14 +35,14 @@ def query(args):
     """
     Interrogate runtime configuration.
     """
-    cfg = load_config(args.config, args.stage)
+    cfg = load_config(args.config, args.stage, args.sudo_passwd)
     introspect.list_hosts(cfg)
 
 def docker_run(args):
     """
     Run a docker container on remote hosts.
     """
-    cfg = load_config(args.config, args.stage)
+    cfg = load_config(args.config, args.stage, args.sudo_passwd)
     pool = cfg.conn_pool
     for conn in pool:
         docker.docker_run(conn, cfg, args.stop_and_remove)
@@ -50,7 +51,7 @@ def manage_rpm(args):
     """
     Manage RPM packages on remote hosts.
     """
-    cfg = load_config(args.config, args.stage)
+    cfg = load_config(args.config, args.stage, args.sudo_passwd)
     pool = cfg.conn_pool
     for conn in pool:
         if args.local:
@@ -64,7 +65,7 @@ def execute_shell(args):
     """
     Execute arbitrary remote commands.
     """
-    cfg = load_config(args.config, args.stage)
+    cfg = load_config(args.config, args.stage, args.sudo_passwd)
     cmd = ' '.join([shellquote(arg) for arg in args.arg])
     pool = cfg.conn_pool
     for conn in pool:
@@ -80,6 +81,8 @@ def main(args):
     if not 'func' in args:
         print("Invalid command.", file=sys.stderr)
         sys.exit(1)
+    if args.prompt_sudo:
+        args.sudo_passwd = getpass.getpass("Enter `sudo` password: ")
     args.func(args)
 
 if __name__ == "__main__":
@@ -92,6 +95,11 @@ if __name__ == "__main__":
         "stage",
         action="store",
         help="The stage to activate.")
+    parser.add_argument(
+        "--prompt-sudo",
+        action="store_true",
+        help="Prompt for a `sudo` password that will be used with any invokations of `sudo`.")
+    parser.set_defaults(sudo_passwd=None)
     subparsers = parser.add_subparsers(help='sub-command help')
 
     parser_dc = subparsers.add_parser('deploy-config', help='Deploy a configuration.')
