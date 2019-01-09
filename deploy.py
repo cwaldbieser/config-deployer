@@ -10,6 +10,27 @@ from deployer import introspect
 from deployer import package_deployer
 from deployer.shellfuncs import shellquote
 
+def print_host_banner(conn):
+    """
+    Print the host banner.
+    """
+    msg = "=== [Connected to {}] ===".format(conn.host)
+    border = "=" * len(msg)
+    print()
+    print(border)
+    print(msg)
+    print(border)
+    print()
+
+def filter_conn_pool(pool, excluded_hosts):
+    """
+    Only produce connections that haven't been excluded.
+    """
+    for conn in pool:
+        if conn.host in excluded_hosts:
+            continue
+        yield conn
+
 def deploy_config(args):
     """
     Deploy a configuration.
@@ -21,8 +42,9 @@ def deploy_config(args):
         invoker.run("mv {} {}".format(shellquote(archive_path), shellquote(args.archive)))
         sys.exit(0) 
     try:
-        pool = cfg.conn_pool
+        pool = filter_conn_pool(cfg.conn_pool, set(args.exclude_host))
         for conn in pool:
+            print_host_banner(conn)
             config_deployer.deploy_config(
                 conn,
                 cfg,
@@ -45,6 +67,7 @@ def docker_run(args):
     cfg = load_config(args.config, args.stage, args.sudo_passwd)
     pool = cfg.conn_pool
     for conn in pool:
+        print_host_banner(conn)
         docker.docker_run(conn, cfg, args.stop_and_remove)
 
 def manage_rpm(args):
@@ -52,8 +75,9 @@ def manage_rpm(args):
     Manage RPM packages on remote hosts.
     """
     cfg = load_config(args.config, args.stage, args.sudo_passwd)
-    pool = cfg.conn_pool
+    pool = filter_conn_pool(cfg.conn_pool, set(args.exclude_host))
     for conn in pool:
+        print_host_banner(conn)
         if args.local:
             package_deployer.install_local_rpm(conn, args.package)
         elif args.uninstall:
@@ -67,8 +91,9 @@ def execute_shell(args):
     """
     cfg = load_config(args.config, args.stage, args.sudo_passwd)
     cmd = ' '.join([shellquote(arg) for arg in args.arg])
-    pool = cfg.conn_pool
+    pool = filter_conn_pool(cfg.conn_pool, set(args.exclude_host))
     for conn in pool:
+        print_host_banner(conn)
         if args.sudo:
             conn.sudo(cmd)
         else:
@@ -99,6 +124,12 @@ if __name__ == "__main__":
         "--prompt-sudo",
         action="store_true",
         help="Prompt for a `sudo` password that will be used with any invokations of `sudo`.")
+    parser.add_argument(
+        "-x",
+        "--exclude-host",
+        action="append",
+        metavar="HOST",
+        help="Exclude host HOST.  May be used multiple times.")
     parser.set_defaults(sudo_passwd=None)
     subparsers = parser.add_subparsers(help='sub-command help')
 
