@@ -14,6 +14,8 @@ def apply_permissions(conn, config, folder, perm_file='__perms__'):
     result = conn.sudo("find {} -name {} -print".format(shellquote(folder), shellquote(perm_file)))
     lines = result.stdout.splitlines()
     for line in lines:
+        if line == '[sudo] password: ':
+            continue
         if line.strip() == "":
             continue
         dirpth = os.path.dirname(line)
