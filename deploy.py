@@ -129,6 +129,7 @@ if __name__ == "__main__":
         "--exclude-host",
         action="append",
         metavar="HOST",
+        default=[],
         help="Exclude host HOST.  May be used multiple times.")
     parser.set_defaults(sudo_passwd=None)
     subparsers = parser.add_subparsers(help='sub-command help')
