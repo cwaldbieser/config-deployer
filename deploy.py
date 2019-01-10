@@ -35,7 +35,7 @@ def deploy_config(args):
     """
     Deploy a configuration.
     """
-    cfg = load_config(args.config, args.stage, args.sudo_passwd)
+    cfg = load_config(args.config, args.stage, args.sudo_passwd, args.pty)
     invoker = cfg.invoker
     archive_path = config_deployer.create_local_archive(invoker, cfg, args.commit)
     if not args.archive is None:
@@ -57,14 +57,14 @@ def query(args):
     """
     Interrogate runtime configuration.
     """
-    cfg = load_config(args.config, args.stage, args.sudo_passwd)
+    cfg = load_config(args.config, args.stage, args.sudo_passwd, args.pty)
     introspect.list_hosts(cfg)
 
 def docker_run(args):
     """
     Run a docker container on remote hosts.
     """
-    cfg = load_config(args.config, args.stage, args.sudo_passwd)
+    cfg = load_config(args.config, args.stage, args.sudo_passwd, args.pty)
     pool = cfg.conn_pool
     for conn in pool:
         print_host_banner(conn)
@@ -74,7 +74,7 @@ def manage_rpm(args):
     """
     Manage RPM packages on remote hosts.
     """
-    cfg = load_config(args.config, args.stage, args.sudo_passwd)
+    cfg = load_config(args.config, args.stage, args.sudo_passwd, args.pty)
     pool = filter_conn_pool(cfg.conn_pool, set(args.exclude_host))
     for conn in pool:
         print_host_banner(conn)
@@ -89,7 +89,7 @@ def execute_shell(args):
     """
     Execute arbitrary remote commands.
     """
-    cfg = load_config(args.config, args.stage, args.sudo_passwd)
+    cfg = load_config(args.config, args.stage, args.sudo_passwd, args.pty)
     cmd = ' '.join([shellquote(arg) for arg in args.arg])
     pool = filter_conn_pool(cfg.conn_pool, set(args.exclude_host))
     for conn in pool:
@@ -131,6 +131,10 @@ if __name__ == "__main__":
         metavar="HOST",
         default=[],
         help="Exclude host HOST.  May be used multiple times.")
+    parser.add_argument(
+        "--pty",
+        action='store_true',
+        help="When issuing remote commands use a PTY.")
     parser.set_defaults(sudo_passwd=None)
     subparsers = parser.add_subparsers(help='sub-command help')
 
