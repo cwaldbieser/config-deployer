@@ -40,7 +40,6 @@ def deploy_config(args):
     archive_path = config_deployer.create_local_archive(invoker, cfg, args.commit)
     if not args.archive is None:
         invoker.run("mv {} {}".format(shellquote(archive_path), shellquote(args.archive)))
-        sys.exit(0) 
     try:
         pool = filter_conn_pool(cfg.conn_pool, set(args.exclude_host))
         for conn in pool:
@@ -65,7 +64,7 @@ def docker_run(args):
     Run a docker container on remote hosts.
     """
     cfg = load_config(args.config, args.stage, args.sudo_passwd, args.pty)
-    pool = cfg.conn_pool
+    pool = filter_conn_pool(cfg.conn_pool, set(args.exclude_host))
     for conn in pool:
         print_host_banner(conn)
         docker.docker_run(conn, cfg, args.stop_and_remove)
